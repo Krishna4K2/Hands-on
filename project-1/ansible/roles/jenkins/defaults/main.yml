@@ -1,0 +1,16 @@
+jenkins_admin_password: "{{ lookup('env', 'JENKINS_ADMIN_PASSWORD') | default('ChangeThisPassword123!', true) }}"  # Set via environment variable
+java_version: "openjdk-11-jdk"
+jenkins_plugins:
+  - git
+  - pipeline
+  - docker
+  - kubernetes
+  - prometheus
+  - sonar
+  - owasp
+  - google-cloud-storage
+  - gcp-auth
+  - docker-workflow
+security_tools:
+  - trivy
+  - clamav

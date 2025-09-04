@@ -1,0 +1,127 @@
+---
+- name: Update system packages
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  register: apt_update
+  retries: 3
+  delay: 10
+  until: apt_update is succeeded
+
+- name: Install required packages
+  apt:
+    name:
+      - openjdk-11-jdk
+      - unzip
+      - wget
+      - curl
+      - postgresql
+      - postgresql-contrib
+      - ufw
+    state: present
+  register: packages_installed
+  retries: 3
+  delay: 5
+  until: packages_installed is succeeded
+
+- name: Create SonarQube system user
+  user:
+    name: sonarqube
+    system: yes
+    shell: /bin/bash
+    home: /opt/sonarqube
+    create_home: no
+    state: present
+
+- name: Create SonarQube directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: sonarqube
+    group: sonarqube
+    mode: '0755'
+  loop:
+    - /opt/sonarqube
+    - /opt/sonarqube/data
+    - /opt/sonarqube/logs
+    - /opt/sonarqube/extensions
+
+- name: Download SonarQube
+  get_url:
+    url: "https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-9.9.1.69595.zip"
+    dest: /tmp/sonarqube.zip
+    mode: '0644'
+
+- name: Extract SonarQube
+  unarchive:
+    src: /tmp/sonarqube.zip
+    dest: /opt/
+    owner: sonarqube
+    group: sonarqube
+    remote_src: yes
+
+- name: Move SonarQube to correct location
+  command: mv /opt/sonarqube-9.9.1.69595 /opt/sonarqube-9.9.1
+  args:
+    creates: /opt/sonarqube-9.9.1
+
+- name: Create symlink to SonarQube
+  file:
+    src: /opt/sonarqube-9.9.1
+    dest: /opt/sonarqube
+    state: link
+    owner: sonarqube
+    group: sonarqube
+
+- name: Configure PostgreSQL for SonarQube
+  become_user: postgres
+  postgresql_db:
+    name: sonarqube
+    encoding: UTF-8
+    lc_collate: en_US.UTF-8
+    lc_ctype: en_US.UTF-8
+    template: template0
+
+- name: Create SonarQube database user
+  become_user: postgres
+  postgresql_user:
+    db: sonarqube
+    name: sonarqube
+    password: "{{ sonarqube_db_password | default('sonarqube') }}"
+    priv: ALL
+
+- name: Configure SonarQube properties
+  template:
+    src: sonar.properties.j2
+    dest: /opt/sonarqube/conf/sonar.properties
+    owner: sonarqube
+    group: sonarqube
+    mode: '0644'
+
+- name: Create SonarQube systemd service
+  template:
+    src: sonarqube.service.j2
+    dest: /etc/systemd/system/sonarqube.service
+    mode: '0644'
+
+- name: Start and enable SonarQube service
+  systemd:
+    name: sonarqube
+    enabled: yes
+    state: started
+    daemon_reload: yes
+
+- name: Wait for SonarQube to be ready
+  uri:
+    url: http://localhost:9000
+    status_code: 200
+  register: sonarqube_status
+  until: sonarqube_status.status == 200
+  retries: 30
+  delay: 10
+
+- name: Configure firewall for SonarQube
+  ufw:
+    rule: allow
+    port: '9000'
+    proto: tcp

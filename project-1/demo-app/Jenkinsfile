@@ -1,0 +1,157 @@
+pipeline {
+    agent any
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        timeout(time: 30, unit: 'MINUTES')
+        timestamps()
+        disableConcurrentBuilds()
+    }
+
+    environment {
+        GCP_PROJECT = 'your-gcp-project-id'  // Replace with your project ID
+        GCR_IMAGE = "gcr.io/${GCP_PROJECT}/demo-app:${env.BUILD_NUMBER}"
+        K8S_CLUSTER = 'jenkins-cluster'
+        K8S_ZONE = 'us-central1-a'
+        DOCKER_IMAGE_TAG = "${env.BUILD_NUMBER}"
+        SONARQUBE_URL = "${env.SONARQUBE_URL ?: ''}"
+        SONARQUBE_TOKEN = credentials('sonarqube-token')
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                echo "Checking out source code..."
+                git branch: 'main',
+                    url: 'https://github.com/Krishna4K2/Hands-on.git',
+                    credentialsId: 'github-credentials'
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                dir('demo-app') {
+                    echo "Installing dependencies..."
+                    sh 'npm ci --prefer-offline --no-audit'
+                }
+            }
+            post {
+                failure {
+                    echo "Dependency installation failed"
+                }
+            }
+        }
+
+        stage('Lint and Test') {
+            parallel {
+                stage('Lint') {
+                    steps {
+                        dir('demo-app') {
+                            echo "Running linter..."
+                            sh 'npm run lint || echo "No lint script available"'
+                        }
+                    }
+                }
+                stage('Test') {
+                    steps {
+                        dir('demo-app') {
+                            echo "Running tests..."
+                            sh 'npm test -- --coverage || echo "No tests available"'
+                        }
+                    }
+                    post {
+                        always {
+                            dir('demo-app') {
+                                junit allowEmptyResults: true, testResults: 'test-results.xml'
+                                publishCoverage adapters: [coberturaAdapter('coverage/cobertura-coverage.xml')]
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                dir('demo-app') {
+                    echo "Building Docker image..."
+                    sh '''
+                        docker build -t ${GCR_IMAGE} \
+                            --label "build-number=${BUILD_NUMBER}" \
+                            --label "git-commit=${GIT_COMMIT}" \
+                            --label "built-by=jenkins" \
+                            .
+                    '''
+                }
+            }
+            post {
+                failure {
+                    sh 'docker system prune -f'
+                }
+            }
+        }
+
+        stage('Push to GCR') {
+            steps {
+                echo "Pushing image to Google Container Registry..."
+                sh '''
+                    gcloud auth configure-docker --quiet
+                    docker push ${GCR_IMAGE}
+                    docker rmi ${GCR_IMAGE} || true
+                '''
+            }
+        }
+
+        stage('Security Scan') {
+            steps {
+                sh 'trivy image --exit-code 1 --format json --output trivy-image-results.json ${GCR_IMAGE}'
+                sh 'curl -X POST -H "Authorization: Bearer $SONARQUBE_TOKEN" -F "projectKey=jenkins-demo-app" -F "file=@trivy-image-results.json" $SONARQUBE_URL/api/external_issues/import'
+                sh 'gsutil cp trivy-image-results.json gs://your-bucket/trivy-results/image-${BUILD_NUMBER}.json'
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('SonarQube') {
+                    sh 'sonar-scanner'
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 1, unit: 'HOURS') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+        stage('Deploy to GKE') {
+            steps {
+                sh 'gcloud container clusters get-credentials ${K8S_CLUSTER} --zone ${K8S_ZONE} --project ${GCP_PROJECT}'
+                dir('demo-app') {
+                    sh 'helm upgrade --install demo-app ./helm --set image.tag=${DOCKER_IMAGE_TAG} --namespace default --create-namespace'
+                }
+            }
+        }
+
+        stage('Health Check') {
+            steps {
+                sh 'kubectl rollout status deployment/demo-app --timeout=300s'
+            }
+        }
+    }
+
+    post {
+        always {
+            sh 'docker system prune -f'
+        }
+        success {
+            echo 'Deployment successful!'
+        }
+        failure {
+            echo 'Deployment failed!'
+            sh 'kubectl logs deployment/demo-app || echo "No logs available"'
+        }
+    }
+}

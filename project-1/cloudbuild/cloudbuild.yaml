@@ -1,0 +1,131 @@
+steps:
+  # ==========================================
+  # TERRAFORM INFRASTRUCTURE
+  # ==========================================
+
+  # Step 1: Lint Terraform (DevOps)
+  - name: 'hashicorp/terraform:1.6.0'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        cd terraform
+        terraform fmt -check -recursive
+    id: 'terraform-lint'
+    waitFor: ['-']
+
+  # Step 2: Initialize and Validate Terraform
+  - name: 'hashicorp/terraform:1.6.0'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        cd terraform
+        terraform init -upgrade
+        terraform validate
+    id: 'terraform-init-validate'
+    waitFor: ['terraform-lint']
+
+  # Step 3: Security Scan with Trivy (DevSecOps)
+  - name: 'aquasecurity/trivy:0.48.0'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        cd terraform
+        trivy fs --exit-code 1 --format json --output trivy-terraform-results.json .
+    id: 'trivy-terraform-scan'
+    waitFor: ['terraform-init-validate']
+
+  # Step 3.1: Upload Trivy results to GCS
+  - name: 'gcr.io/cloud-builders/gsutil'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        cd terraform
+        gsutil cp trivy-terraform-results.json gs://$TRIVY_BUCKET/trivy-results/terraform-$COMMIT_SHA.json
+    id: 'upload-trivy-results'
+    waitFor: ['trivy-terraform-scan']
+
+  # Step 3.2: Send Trivy results to SonarQube (if configured)
+  - name: 'gcr.io/cloud-builders/curl'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        if [ -n "$SONARQUBE_URL" ] && [ -n "$SONARQUBE_TOKEN" ]; then
+          cd terraform
+          curl -X POST \
+            -H "Authorization: Bearer $SONARQUBE_TOKEN" \
+            -F "projectKey=terraform-iac" \
+            -F "file=@trivy-terraform-results.json" \
+            "$SONARQUBE_URL/api/external_issues/import"
+        else
+          echo "SonarQube not configured, skipping results upload"
+        fi
+    id: 'sonarqube-upload'
+    waitFor: ['upload-trivy-results']
+
+  # Step 4: Deploy Terraform Infrastructure
+  - name: 'hashicorp/terraform:1.6.0'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        cd terraform
+        terraform plan -out=tfplan
+        terraform apply -auto-approve tfplan
+    id: 'terraform-deploy'
+    waitFor: ['sonarqube-upload']
+    env:
+      - 'TF_VAR_project_id=$PROJECT_ID'
+
+  # ==========================================
+  # CONFIGURATION MANAGEMENT
+  # ==========================================
+
+  # Step 5: Run Ansible Playbook
+  - name: 'cytopia/ansible:2.12'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        cd ansible
+        ansible-playbook -i inventory.ini playbook.yml --tags jenkins,sonarqube
+    id: 'ansible-configure'
+    waitFor: ['terraform-deploy']
+
+  # ==========================================
+  # VERIFICATION
+  # ==========================================
+
+  # Step 6: Verify Infrastructure
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        echo "Verifying infrastructure deployment..."
+        gcloud compute instances list --project=$PROJECT_ID --filter="name:(jenkins-instance OR sonarqube-instance)"
+    id: 'verify-infrastructure'
+    waitFor: ['ansible-configure']
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: 'E2_HIGHCPU_8'
+  diskSizeGb: 100
+  substitutionOption: 'ALLOW_LOOSE'
+
+substitutions:
+  _TRIVY_BUCKET: 'your-trivy-results-bucket'
+  _SONARQUBE_URL: ''
+  _SONARQUBE_TOKEN: ''
+
+timeout: '3600s'
+
+# Tags for better organization
+tags:
+  - 'devops'
+  - 'infrastructure'
+  - 'security'

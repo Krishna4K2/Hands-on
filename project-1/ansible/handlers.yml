@@ -1,0 +1,25 @@
+---
+# Global handlers for service management
+handlers:
+  - name: Restart Jenkins
+    service:
+      name: jenkins
+      state: restarted
+    listen: "restart jenkins"
+
+  - name: Restart SonarQube
+    service:
+      name: sonarqube
+      state: restarted
+    listen: "restart sonarqube"
+
+  - name: Reload systemd
+    systemd:
+      daemon_reload: yes
+    listen: "reload systemd"
+
+  - name: Restart PostgreSQL
+    service:
+      name: postgresql
+      state: restarted
+    listen: "restart postgresql"

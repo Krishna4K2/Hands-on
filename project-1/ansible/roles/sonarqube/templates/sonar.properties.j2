@@ -1,0 +1,20 @@
+# Database configuration
+sonar.jdbc.username=sonarqube
+sonar.jdbc.password={{ sonarqube_db_password }}
+sonar.jdbc.url=jdbc:postgresql://{{ sonarqube_db_host }}:{{ sonarqube_db_port }}/{{ sonarqube_db_name }}
+
+# Web server configuration
+sonar.web.host={{ sonarqube_web_host }}
+sonar.web.port={{ sonarqube_web_port }}
+sonar.web.context={{ sonarqube_web_context }}
+
+# Elasticsearch configuration
+sonar.search.javaOpts=-Xmx512m -Xms512m -XX:+HeapDumpOnOutOfMemoryError
+
+# Logging configuration
+sonar.log.level=INFO
+sonar.log.console=true
+
+# Other configurations
+sonar.ce.javaOpts=-Xmx512m -Xms128m -XX:+HeapDumpOnOutOfMemoryError
+sonar.web.javaOpts=-Xmx512m -Xms128m -XX:+HeapDumpOnOutOfMemoryError

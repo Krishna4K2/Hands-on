@@ -1,0 +1,69 @@
+---
+# Ansible Playbook for DevOps Infrastructure Setup
+# This playbook configures Jenkins and SonarQube servers on GCP
+
+- name: Configure Jenkins Server
+  hosts: jenkins
+  become: yes
+  gather_facts: yes
+
+  pre_tasks:
+    - name: Update package cache
+      package:
+        update_cache: yes
+        cache_valid_time: 3600
+      when: ansible_os_family == 'Debian'
+
+    - name: Ensure Python is available
+      raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+      when: ansible_python_interpreter is not defined
+
+  roles:
+    - role: jenkins
+      tags: ['jenkins', 'ci']
+
+  post_tasks:
+    - name: Verify Jenkins service
+      service:
+        name: jenkins
+        state: started
+        enabled: yes
+      tags: ['jenkins', 'verify']
+
+- name: Configure SonarQube Server
+  hosts: sonarqube
+  become: yes
+  gather_facts: yes
+
+  pre_tasks:
+    - name: Update package cache
+      package:
+        update_cache: yes
+        cache_valid_time: 3600
+      when: ansible_os_family == 'Debian'
+
+    - name: Ensure Python is available
+      raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+      when: ansible_python_interpreter is not defined
+
+  roles:
+    - role: sonarqube
+      tags: ['sonarqube', 'code-quality']
+
+  post_tasks:
+    - name: Verify SonarQube service
+      service:
+        name: sonarqube
+        state: started
+        enabled: yes
+      tags: ['sonarqube', 'verify']
+
+    - name: Wait for SonarQube to be ready
+      uri:
+        url: "http://localhost:9000"
+        status_code: 200
+      register: sonarqube_health
+      until: sonarqube_health.status == 200
+      retries: 30
+      delay: 10
+      tags: ['sonarqube', 'verify']
