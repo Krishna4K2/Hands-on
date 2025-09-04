@@ -9,6 +9,21 @@ variable "region" {
   default     = "us-central1"
 }
 
+variable "environment" {
+  description = "Environment name (dev, staging, prod)"
+  type        = string
+  default     = "dev"
+}
+
+# GCS Bucket for Terraform State (must be created first)
+module "bucket" {
+  source      = "./modules/bucket"
+  project_id  = var.project_id
+  region      = var.region
+  bucket_name = "${var.project_id}-terraform-state-${var.environment}"
+  environment = var.environment
+}
+
 # VPC Module
 module "vpc" {
   source     = "./modules/vpc"
@@ -48,6 +63,16 @@ module "sonarqube_vm" {
 }
 
 # Outputs
+output "terraform_state_bucket" {
+  description = "GCS bucket name for Terraform state"
+  value       = module.bucket.bucket_name
+}
+
+output "terraform_state_bucket_url" {
+  description = "GCS bucket URL for Terraform state"
+  value       = module.bucket.bucket_url
+}
+
 output "jenkins_ip" {
   value = module.vm.jenkins_ip
 }

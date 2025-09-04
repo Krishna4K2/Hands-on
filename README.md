@@ -5,9 +5,9 @@
 
 A collection of hands-on DevOps projects demonstrating real-world infrastructure automation, CI/CD pipelines, and cloud-native deployments.
 
-## ��� Projects
+## 📁 Projects
 
-### ��� [Project 1: Automated Jenkins Deployment on GCP](project-1/)
+### 🚀 [Project 1: Automated Jenkins Deployment on GCP](project-1/)
 
 **DevOps, DevSecOps, Cloud, Platform & SRE Project**
 
@@ -23,9 +23,9 @@ A comprehensive project that demonstrates end-to-end automation by deploying a J
 - Container orchestration with Kubernetes
 - Application deployment with Helm
 
-��� **[View Project Details](project-1/README.md)** | ��� **[Setup Guide](project-1/docs/README.md)**
+📖 **[View Project Details](project-1/README.md)** | 📋 **[Setup Guide](project-1/docs/README.md)**
 
-## ��� Skills Demonstrated
+## 🎯 Skills Demonstrated
 
 - **DevOps**: Infrastructure automation, CI/CD pipelines, configuration management
 - **DevSecOps**: Security scanning, vulnerability assessment, compliance
@@ -33,6 +33,6 @@ A comprehensive project that demonstrates end-to-end automation by deploying a J
 - **Platform Engineering**: Kubernetes, Helm, service mesh concepts
 - **Site Reliability Engineering**: Monitoring, alerting, reliability patterns
 
-## ��� License
+## 📄 License
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
