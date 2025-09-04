@@ -26,7 +26,7 @@ This project demonstrates a comprehensive DevOps, DevSecOps, Cloud, Platform, an
 - **docs/**: Images, diagrams, and architecture assets.
 
 ## Prerequisites
-- GCP account with billing.
+- GCP account.
 - Terraform, Ansible, gcloud CLI installed.
 - SSH key pair.
 
@@ -68,21 +68,3 @@ This project demonstrates a comprehensive DevOps, DevSecOps, Cloud, Platform, an
   - Demo-App: Scanned in Jenkins with `sonar-project.properties`.
 - **Trivy Scans**: Results pushed to SonarQube via API and GCS bucket `gs://your-bucket/trivy-results/`.
 - **Access**: View reports in SonarQube dashboard for vulnerabilities, code smells, and quality gates.
-
-## Contributing
-Feel free to fork and enhance!
-
-## License
-MIT
-
----
-
-## Showcase This Project
-This project demonstrates expertise in:
-- **DevOps**: Infrastructure as Code, CI/CD pipelines, automation
-- **DevSecOps**: Security scanning, hardening, compliance
-- **Cloud Engineering**: GCP services, containerization, orchestration
-- **Platform Engineering**: Kubernetes, Helm, microservices
-- **SRE**: Monitoring, reliability, incident response
-
-Perfect for LinkedIn posts, GitHub portfolio, and job applications! 🎯
