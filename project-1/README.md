@@ -1,5 +1,6 @@
 # Automated Jenkins Deployment on GCP with Terraform, Ansible, and Cloud Build
 
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Terraform](https://img.shields.io/badge/Terraform-1.0+-623CE4?style=flat&logo=terraform)](https://www.terraform.io/)
 [![Ansible](https://img.shields.io/badge/Ansible-2.9+-EE0000?style=flat&logo=ansible)](https://www.ansible.com/)
 [![Docker](https://img.shields.io/badge/Docker-20.10+-2496ED?style=flat&logo=docker)](https://www.docker.com/)
@@ -68,3 +69,26 @@ This project demonstrates a comprehensive DevOps, DevSecOps, Cloud, Platform, an
   - Demo-App: Scanned in Jenkins with `sonar-project.properties`.
 - **Trivy Scans**: Results pushed to SonarQube via API and GCS bucket `gs://your-bucket/trivy-results/`.
 - **Access**: View reports in SonarQube dashboard for vulnerabilities, code smells, and quality gates.
+
+## 🤝 Contributing
+
+Feel free to fork and enhance! This project welcomes contributions from the DevOps community.
+
+## 📄 License
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](../LICENSE) file for details.
+
+---
+
+## Showcase This Project
+
+This project demonstrates expertise in:
+- **DevOps**: Infrastructure as Code, CI/CD pipelines, automation
+- **DevSecOps**: Security scanning, hardening, compliance
+- **Cloud Engineering**: GCP services, containerization, orchestration
+- **Platform Engineering**: Kubernetes, Helm, microservices
+- **SRE**: Monitoring, reliability, incident response
+
+Perfect for **LinkedIn posts**, **GitHub portfolio**, and **job applications**! 🎯
+
+⭐ **Don't forget to star this repository** if you found it helpful!
