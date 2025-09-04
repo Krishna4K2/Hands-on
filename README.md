@@ -1,9 +1,9 @@
-# Hands-on DevOps Projects
+# Hands-on Projects
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![GitHub stars](https://img.shields.io/github/stars/Krishna4K2/Hands-on?style=social)](https://github.com/Krishna4K2/Hands-on)
 
-A collection of hands-on DevOps projects demonstrating real-world infrastructure automation, CI/CD pipelines, and cloud-native deployments.
+A comprehensive collection of hands-on projects demonstrating expertise in DevOps, DevSecOps, Cloud Engineering, Platform Engineering, and Site Reliability Engineering (SRE) through real-world infrastructure automation, CI/CD pipelines, security scanning, and cloud-native deployments.
 
 ## 📁 Projects
 
