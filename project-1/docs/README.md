@@ -1,38 +1,3 @@
-# Documentation Assets
-
-This folder contains images, architecture diagrams, and Mermaid diagrams for the project.
-
-## Contents
-- **Images**: Screenshots and visuals from deployments.
-- **Architecture Diagrams**: High-level overviews of the setup.
-- **Mermaid Diagrams**: Interactive flowcharts (e.g., CI/CD pipelines).
-
-## Sample Architecture Diagram
-
-```
-GCP Cloud
-├── Cloud Build (CI/CD Pipeline)
-│   ├── Terraform (IaC)
-│   ├── Ansible (Configuration)
-│   ├── Trivy (Security Scans)
-│   └── SonarQube (Code Quality)
-├── Compute Engine VMs
-│   ├── Jenkins Server
-│   │   ├── Docker
-│   │   ├── kubectl
-│   │   └── Helm
-│   └── SonarQube Server
-│       ├── PostgreSQL
-│       └── Code Analysis
-└── GKE Cluster
-    └── Demo App (via Helm)
-        ├── Node.js Application
-        ├── Health Checks
-        └── Monitoring
-```
-
-*Add actual diagram images here for visual representation.*
-
 ## Things to Do (Setup Checklist)
 
 Before deploying the project, complete these steps:
